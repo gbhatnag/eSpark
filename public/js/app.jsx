@@ -14,7 +14,7 @@ var firebaseApp = firebase.initializeApp({
   messagingSenderId: "92877010944"
 });
 
-// Models and Forms
+// Models, Forms, Questions
 function Action(description) {
   this.time = Date();  // now
   this.description = description;
@@ -44,6 +44,76 @@ const TestFormOptions = {
     }
   }
 };
+const ReviewBSchema = t.struct({
+  definingPrefixes: t.Boolean,
+  musicRemixes: t.Boolean,
+  listingCommonPrefixes: t.Boolean,
+  greekAndLatin: t.Boolean
+});
+const Q1choices = t.enums({
+  A: 'A: the front of a word',
+  B: 'B: the end of a word',
+  C: 'C: the middle of a word'
+});
+const Q1form = t.struct({
+  choices: Q1choices
+});
+const Q2choices = t.enums({
+  A: 'A: again',
+  B: 'B: before',
+  C: 'C: not'
+});
+const Q2form = t.struct({
+  choices: Q2choices
+});
+const Q3choices = t.enums({
+  A: 'A: inliterate',
+  B: 'B: illiterate',
+  C: 'C: unliterate'
+});
+const Q3form = t.struct({
+  choices: Q3choices
+});
+const Q4choices = t.enums({
+  A: 'A: in',
+  B: 'B: anti',
+  C: 'C: dis'
+});
+const Q4form = t.struct({
+  choices: Q4choices
+});
+const Q5choices = t.enums({
+  A: 'A: irrational',
+  B: 'B: antisocial',
+  C: 'C: devalued'
+});
+const Q5form = t.struct({
+  choices: Q5choices
+});
+const Q6choices = t.enums({
+  A: 'A: between',
+  B: 'B: against',
+  C: 'C: large'
+});
+const Q6form = t.struct({
+  choices: Q6choices
+});
+const Q7choices = t.enums({
+  A: 'A: English or French',
+  B: 'B: Greek or Latin',
+  C: 'C: India or Africa'
+});
+const Q7form = t.struct({
+  choices: Q7choices
+});
+const Qoptions = {
+  fields: {
+    choices: {
+      factory: t.form.Radio,
+      auto: 'none'
+    }
+  }
+}
 
 // global state
 var currentTest = {};
@@ -105,11 +175,11 @@ var Test = React.createClass({
     if (!value) return;  // error
     var ref = firebase.database().ref('/tests').push();
     ref.set(value);
-    currentTest = {
-      key: ref.key,
-      values: value,
-      actions: []
-    }
+    currentTest = Object.assign({}, value);
+    currentTest.key = ref.key;
+    currentTest.actions = [];
+    currentTest.responses = {};
+    currentTest.score = 0;
     this.context.router.push('/test/ready');
   },
 
@@ -133,7 +203,7 @@ var Ready = React.createClass({
   render: function () {
     return (
       <div className="jumbotron">
-        <h1>Hello, {currentTest.values.studentName}</h1>
+        <h1>Hello, {currentTest.studentName}</h1>
         <p>Learn as much as you can from the following video and then answer
           questions afterward.</p>
         <p>You can pause and rewind the video while it's playing. But be careful,
@@ -187,9 +257,9 @@ var Play = React.createClass({
       } else if (playerStatus == 0) {
         console.log('ended at', displayVideoTime(player.getCurrentTime()));
         addAction('video ended at ' + displayVideoTime(player.getCurrentTime()));
-        if (currentTest.values.testMethod == 'A') {
+        if (currentTest.testMethod == 'A') {
           self.context.router.push('/test/play/reviewA');
-        } else if (currentTest.values.testMethod == 'B') {
+        } else if (currentTest.testMethod == 'B') {
           self.context.router.push('/test/play/reviewB');
         } else {  // variant C skips reflection
           self.context.router.push('/test/play/quiz');
@@ -239,7 +309,7 @@ var ReviewA = React.createClass({
   render: function () {
     return (
       <div>
-        <p>In your own words, describe what this video was about:</p>
+        <p>In your own words, describe what the video was about:</p>
         <form onSubmit={this.saveReflection}>
           <p><textarea id="reflection" className="form-control" rows="3" placeholder="Type here"></textarea></p>
           <button type="submit" className="btn btn-primary btn-lg">Next</button>
@@ -254,11 +324,27 @@ var ReviewA = React.createClass({
 });
 
 var ReviewB = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  saveReflection: function (ev) {
+    ev.preventDefault();
+    updateCurrentTest('reflection', this.refs.reviewBForm.getValue());
+    addAction('added reflection topics');
+    this.context.router.push('/test/play/quiz');
+  },
+
   render: function () {
     return (
       <div>
-        <p>Review the video; UI B</p>
-        <Link to="/test/play/quiz" className="btn btn-primary btn-lg">Quiz</Link>
+        <p>What was the video about? Select all that apply:</p>
+        <form onSubmit={this.saveReflection}>
+          <Form ref="reviewBForm" type={ReviewBSchema} />
+          <p>
+            <button type="submit" className="btn btn-primary btn-lg">Next</button>
+          </p>
+        </form>
       </div>
     );
   },

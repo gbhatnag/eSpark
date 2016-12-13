@@ -176,9 +176,9 @@ var Play = React.createClass({
       } else if (playerStatus == 0) {
         console.log('ended at', displayVideoTime(player.getCurrentTime()));
         currentTest.actions.push(new Action('video ended at ' + displayVideoTime(player.getCurrentTime())));
-        if (currentTest.testMethod == 'A') {
+        if (currentTest.values.testMethod == 'A') {
           self.context.router.push('/test/play/reviewA');
-        } else if (currentTest.testMethod == 'B') {
+        } else if (currentTest.values.testMethod == 'B') {
           self.context.router.push('/test/play/reviewB');
         } else {  // variant C skips reflection
           self.context.router.push('/test/play/quiz');

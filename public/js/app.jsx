@@ -14,7 +14,11 @@ var firebaseApp = firebase.initializeApp({
   messagingSenderId: "92877010944"
 });
 
-// 'Models' and Forms
+// Models and Forms
+function Action(description) {
+  this.time = Date();  // now
+  this.description = description;
+}
 const t = TcombForm;
 const Form = t.form.Form;
 const Methods = t.enums({
@@ -42,7 +46,17 @@ const formOptions = {
 };
 
 // global state
-var currentTest = null;
+var currentTest = {};
+var currentActions = [];
+
+// helper functions
+var displayVideoTime = function (seconds) {
+  var min = Math.floor(seconds / 60);
+  var sec = (seconds % 60).toPrecision(2);
+  var spc = '0';
+  if (sec >= 10) spc = '';
+  return min + ':' + spc + sec;
+}
 
 // components
 var App = React.createClass({
@@ -78,9 +92,13 @@ var Test = React.createClass({
     ev.preventDefault();
     const value = this.refs.setupTestForm.getValue();
     if (!value) return;  // error
-    currentTest = value;
     var ref = firebase.database().ref('/tests').push();
-    ref.set(currentTest);
+    ref.set(value);
+    currentTest = {
+      key: ref.key,
+      values: value,
+      actions: []
+    }
     this.context.router.push('/test/ready');
   },
 
@@ -104,7 +122,7 @@ var Ready = React.createClass({
   render: function () {
     return (
       <div className="jumbotron">
-        <h1>Hello, {currentTest.studentName}</h1>
+        <h1>Hello, {currentTest.values.studentName}</h1>
         <p>Learn as much as you can from the following video and then answer
           questions afterward.</p>
         <p>You can pause and rewind the video while it's playing. But be careful,
@@ -131,7 +149,7 @@ var Play = React.createClass({
           frameBorder="0" allowFullScreen
         ></iframe>
 
-      <div id="qmodal" className="modal" data-backdrop="static">
+        <div id="qmodal" className="modal" data-backdrop="static">
           <div className="modal-dialog modal-lg">
             <div className="modal-content">
               <div className="modal-body">
@@ -148,14 +166,16 @@ var Play = React.createClass({
   componentDidMount: function () {
     var self = this;
     var onPlayerReady = function (event) {
-      console.log('player ready');
+      console.log('video player loaded at', Date());
+      currentTest.actions.push(new Action('video player loaded'));
     };
     var onPlayerStateChange = function (event) {
       var playerStatus = event.data;
       if (playerStatus == -1) {
         console.log('unstarted');
       } else if (playerStatus == 0) {
-        console.log('ended at', player.getCurrentTime());
+        console.log('ended at', displayVideoTime(player.getCurrentTime()));
+        currentTest.actions.push(new Action('video ended at ' + displayVideoTime(player.getCurrentTime())));
         if (currentTest.testMethod == 'A') {
           self.context.router.push('/test/play/reviewA');
         } else if (currentTest.testMethod == 'B') {
@@ -164,13 +184,17 @@ var Play = React.createClass({
           self.context.router.push('/test/play/quiz');
         }
       } else if (playerStatus == 1) {
-        console.log('playing at', player.getCurrentTime());
+        console.log('playing at', displayVideoTime(player.getCurrentTime()));
+        currentTest.actions.push(new Action('video playing at ' + displayVideoTime(player.getCurrentTime())));
       } else if (playerStatus == 2) {
-        console.log('paused at', player.getCurrentTime());
+        console.log('paused at', displayVideoTime(player.getCurrentTime()));
+        currentTest.actions.push(new Action('video paused at ' + displayVideoTime(player.getCurrentTime())));
       } else if (playerStatus == 3) {
-        console.log('buffering at', player.getCurrentTime());
+        console.log('buffering at', displayVideoTime(player.getCurrentTime()));
+        currentTest.actions.push(new Action('video buffering at ' + displayVideoTime(player.getCurrentTime())));
       } else if (playerStatus == 5) {
-        console.log('cued at', player.getCurrentTime());
+        console.log('cued at', displayVideoTime(player.getCurrentTime()));
+        currentTest.actions.push(new Action('video cued at ' + displayVideoTime(player.getCurrentTime())));
       }
     }
     var player = new YT.Player('vid', {
@@ -229,6 +253,7 @@ var Quiz = React.createClass({
 
 var Done = React.createClass({
   closeModal: function () {
+    firebase.database().ref('/tests/' + currentTest.key).update({actions: currentTest.actions});
     $("#qmodal").modal('hide');
   },
 

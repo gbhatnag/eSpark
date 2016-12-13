@@ -56,7 +56,7 @@ const Q1choices = t.enums({
   C: 'C: the middle of a word'
 });
 const Q1form = t.struct({
-  choices: Q1choices
+  response: Q1choices
 });
 const Q2choices = t.enums({
   A: 'A: again',
@@ -64,7 +64,7 @@ const Q2choices = t.enums({
   C: 'C: not'
 });
 const Q2form = t.struct({
-  choices: Q2choices
+  response: Q2choices
 });
 const Q3choices = t.enums({
   A: 'A: inliterate',
@@ -72,15 +72,15 @@ const Q3choices = t.enums({
   C: 'C: unliterate'
 });
 const Q3form = t.struct({
-  choices: Q3choices
+  response: Q3choices
 });
 const Q4choices = t.enums({
-  A: 'A: in',
-  B: 'B: anti',
-  C: 'C: dis'
+  A: 'A: in-',
+  B: 'B: anti-',
+  C: 'C: dis-'
 });
 const Q4form = t.struct({
-  choices: Q4choices
+  response: Q4choices
 });
 const Q5choices = t.enums({
   A: 'A: irrational',
@@ -88,7 +88,7 @@ const Q5choices = t.enums({
   C: 'C: devalued'
 });
 const Q5form = t.struct({
-  choices: Q5choices
+  response: Q5choices
 });
 const Q6choices = t.enums({
   A: 'A: between',
@@ -96,7 +96,7 @@ const Q6choices = t.enums({
   C: 'C: large'
 });
 const Q6form = t.struct({
-  choices: Q6choices
+  response: Q6choices
 });
 const Q7choices = t.enums({
   A: 'A: English or French',
@@ -104,11 +104,11 @@ const Q7choices = t.enums({
   C: 'C: India or Africa'
 });
 const Q7form = t.struct({
-  choices: Q7choices
+  response: Q7choices
 });
 const Qoptions = {
   fields: {
-    choices: {
+    response: {
       factory: t.form.Radio,
       auto: 'none'
     }
@@ -137,6 +137,21 @@ var updateCurrentTest = function (key, value) {
   var save = {};
   save[key] = value;
   firebase.database().ref('/tests/' + currentTest.key).update(save);
+};
+
+// calculate score for current test and responses
+const ANSWER_KEY = {
+  q1: "A", q2: "C", q3: "B", q4: "A", q5: "C", q6: "A", q7: "B"
+};
+var calculateScore = function () {
+  var correct = 0;
+  for (var i = 1; i < 8; i++) {
+    var q = 'q' + i;
+    if (ANSWER_KEY[q] == currentTest.responses[q].response) {
+      correct++;
+    }
+  }
+  return (100 * correct / 7).toFixed(0) + '%';
 };
 
 // components
@@ -262,7 +277,7 @@ var Play = React.createClass({
         } else if (currentTest.testMethod == 'B') {
           self.context.router.push('/test/play/reviewB');
         } else {  // variant C skips reflection
-          self.context.router.push('/test/play/quiz');
+          self.context.router.push('/test/play/q1');
         }
       } else if (playerStatus == 1) {
         console.log('playing at', displayVideoTime(player.getCurrentTime()));
@@ -303,7 +318,7 @@ var ReviewA = React.createClass({
     $ref.parent().removeClass('has-error');
     updateCurrentTest('reflection', val);
     addAction('added freeform reflection');
-    this.context.router.push('/test/play/quiz');
+    this.context.router.push('/test/play/q1');
   },
 
   render: function () {
@@ -332,7 +347,7 @@ var ReviewB = React.createClass({
     ev.preventDefault();
     updateCurrentTest('reflection', this.refs.reviewBForm.getValue());
     addAction('added reflection topics');
-    this.context.router.push('/test/play/quiz');
+    this.context.router.push('/test/play/q1');
   },
 
   render: function () {
@@ -354,12 +369,236 @@ var ReviewB = React.createClass({
   }
 });
 
-var Quiz = React.createClass({
+var Q1 = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  save: function (ev) {
+    ev.preventDefault();
+    const val = this.refs.q1Form.getValue();
+    if (!val) return;  // error
+    currentTest.responses['q1'] = val;
+    addAction('responded to question 1');
+    this.context.router.push('/test/play/q2');
+  },
+
   render: function () {
     return (
       <div>
-        <p>Present quiz questions; independent of testing method. Need to cycle through different quiz questions.</p>
-        <Link to="/test/play/done" className="btn btn-primary btn-lg">Done</Link>
+        <p>Question 1 of 7</p>
+        <p>A prefix is found at:</p>
+        <form onSubmit={this.save}>
+          <Form ref="q1Form" type={Q1form} options={Qoptions} />
+          <p>
+            <button type="submit" className="btn btn-primary btn-lg">Next</button>
+          </p>
+        </form>
+      </div>
+    );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
+  }
+});
+
+var Q2 = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  save: function (ev) {
+    ev.preventDefault();
+    const val = this.refs.q2Form.getValue();
+    if (!val) return;  // error
+    currentTest.responses['q2'] = val;
+    addAction('responded to question 2');
+    this.context.router.push('/test/play/q3');
+  },
+
+  render: function () {
+    return (
+      <div>
+        <p>Question 2 of 7</p>
+        <p>When you see non- or un- at the front of a word, that means:</p>
+        <form onSubmit={this.save}>
+          <Form ref="q2Form" type={Q2form} options={Qoptions} />
+          <p>
+            <button type="submit" className="btn btn-primary btn-lg">Next</button>
+          </p>
+        </form>
+      </div>
+    );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
+  }
+});
+
+var Q3 = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  save: function (ev) {
+    ev.preventDefault();
+    const val = this.refs.q3Form.getValue();
+    if (!val) return;  // error
+    currentTest.responses['q3'] = val;
+    addAction('responded to question 3');
+    this.context.router.push('/test/play/q4');
+  },
+
+  render: function () {
+    return (
+      <div>
+        <p>Question 3 of 7</p>
+        <p>If you can’t read, then you’re:</p>
+        <form onSubmit={this.save}>
+          <Form ref="q3Form" type={Q3form} options={Qoptions} />
+          <p>
+            <button type="submit" className="btn btn-primary btn-lg">Next</button>
+          </p>
+        </form>
+      </div>
+    );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
+  }
+});
+
+var Q4 = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  save: function (ev) {
+    ev.preventDefault();
+    const val = this.refs.q4Form.getValue();
+    if (!val) return;  // error
+    currentTest.responses['q4'] = val;
+    addAction('responded to question 4');
+    this.context.router.push('/test/play/q5');
+  },
+
+  render: function () {
+    return (
+      <div>
+        <p>Question 4 of 7</p>
+        <p>To use one word that describes someone as not active, you would use
+          the following prefix:</p>
+        <form onSubmit={this.save}>
+          <Form ref="q4Form" type={Q4form} options={Qoptions} />
+          <p>
+            <button type="submit" className="btn btn-primary btn-lg">Next</button>
+          </p>
+        </form>
+      </div>
+    );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
+  }
+});
+
+var Q5 = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  save: function (ev) {
+    ev.preventDefault();
+    const val = this.refs.q5Form.getValue();
+    if (!val) return;  // error
+    currentTest.responses['q5'] = val;
+    addAction('responded to question 5');
+    this.context.router.push('/test/play/q6');
+  },
+
+  render: function () {
+    return (
+      <div>
+        <p>Question 5 of 7</p>
+        <p>If you disagree, well hey, that’s cool, but your whole style gets:</p>
+        <form onSubmit={this.save}>
+          <Form ref="q5Form" type={Q5form} options={Qoptions} />
+          <p>
+            <button type="submit" className="btn btn-primary btn-lg">Next</button>
+          </p>
+        </form>
+      </div>
+    );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
+  }
+});
+
+var Q6 = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  save: function (ev) {
+    ev.preventDefault();
+    const val = this.refs.q6Form.getValue();
+    if (!val) return;  // error
+    currentTest.responses['q6'] = val;
+    addAction('responded to question 6');
+    this.context.router.push('/test/play/q7');
+  },
+
+  render: function () {
+    return (
+      <div>
+        <p>Question 6 of 7</p>
+        <p>The prefix, inter-, means:</p>
+        <form onSubmit={this.save}>
+          <Form ref="q6Form" type={Q6form} options={Qoptions} />
+          <p>
+            <button type="submit" className="btn btn-primary btn-lg">Next</button>
+          </p>
+        </form>
+      </div>
+    );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
+  }
+});
+
+var Q7 = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  save: function (ev) {
+    ev.preventDefault();
+    const val = this.refs.q7Form.getValue();
+    if (!val) return;  // error
+    currentTest.responses['q7'] = val;
+    addAction('responded to question 7');
+    this.context.router.push('/test/play/done');
+  },
+
+  render: function () {
+    return (
+      <div>
+        <p>Question 7 of 7</p>
+        <p>Most prefixes come from:</p>
+        <form onSubmit={this.save}>
+          <Form ref="q7Form" type={Q7form} options={Qoptions} />
+          <p>
+            <button type="submit" className="btn btn-primary btn-lg">Next</button>
+          </p>
+        </form>
       </div>
     );
   },
@@ -373,14 +612,17 @@ var Done = React.createClass({
   closeModal: function () {
     addAction('completed test');
     updateCurrentTest('actions', currentTest.actions);
+    updateCurrentTest('responses', currentTest.responses);
+    updateCurrentTest('score', calculateScore());
     $("#qmodal").modal('hide');
   },
 
   render: function () {
     return (
       <div>
-        <p>Present a done message for hand-back to tester.</p>
-        <Link to="/" className="btn btn-primary btn-lg" onClick={this.closeModal}>Ok</Link>
+        <p>Congrats! You're all done!</p>
+        <p>Pass the tablet back to the teacher.</p>
+        <Link to="/" className="btn btn-primary btn-lg" onClick={this.closeModal}>Sweet</Link>
       </div>
     );
   },
@@ -410,7 +652,13 @@ ReactDOM.render((
       <Route path="/test/play" component={Play}>
         <Route path="/test/play/reviewA" component={ReviewA} />
         <Route path="/test/play/reviewB" component={ReviewB} />
-        <Route path="/test/play/quiz" component={Quiz} />
+        <Route path="/test/play/q1" component={Q1} />
+        <Route path="/test/play/q2" component={Q2} />
+        <Route path="/test/play/q3" component={Q3} />
+        <Route path="/test/play/q4" component={Q4} />
+        <Route path="/test/play/q5" component={Q5} />
+        <Route path="/test/play/q6" component={Q6} />
+        <Route path="/test/play/q7" component={Q7} />
         <Route path="/test/play/done" component={Done} />
       </Route>
       <Route path="/data" component={Data} />

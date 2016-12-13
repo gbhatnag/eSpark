@@ -20,8 +20,7 @@ const Form = t.form.Form;
 const Methods = t.enums({
   A: 'A: Reflect with own words',
   B: 'B: Reflect with given words',
-  C: 'C: No Reflection',
-  R: 'Random choice between A, B, C'
+  C: 'C: No Reflection'
 });
 const TestSchema = t.struct({
   studentName: t.String,
@@ -36,6 +35,7 @@ const TestSchema = t.struct({
 const formOptions = {
   fields: {
     testMethod: {
+      factory: t.form.Radio,
       nullOption: {value: '-', text: 'Select a variant'}
     }
   }
@@ -105,7 +105,11 @@ var Ready = React.createClass({
     return (
       <div className="jumbotron">
         <h1>Hello, {currentTest.studentName}</h1>
-        <p>Ready?</p>
+        <p>Learn as much as you can from the following video and then answer
+          questions afterward.</p>
+        <p>You can pause and rewind the video while it's playing. But be careful,
+          when the video is over, you cannot watch it again.</p>
+        <p className="text-primary">Ready?</p>
         <p>
           <Link to="/test/play" className="btn btn-primary btn-lg">Watch Video</Link>
         </p>
@@ -115,17 +119,34 @@ var Ready = React.createClass({
 });
 
 var Play = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
   render: function () {
     return (
       <div className="embed-responsive embed-responsive-16by9">
         <iframe id="vid" className="embed-responsive-item"
           src="https://www.youtube.com/embed/mRdMYuNeAng?enablejsapi=1&amp;rel=0&amp;showinfo=0&amp;autoplay=1"
-          frameBorder="0" allowFullScreen></iframe>
+          frameBorder="0" allowFullScreen
+        ></iframe>
+
+      <div id="qmodal" className="modal" data-backdrop="static">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-body">
+                {this.props.children}
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     );
   },
 
   componentDidMount: function () {
+    var self = this;
     var onPlayerReady = function (event) {
       console.log('player ready');
     };
@@ -135,6 +156,13 @@ var Play = React.createClass({
         console.log('unstarted');
       } else if (playerStatus == 0) {
         console.log('ended at', player.getCurrentTime());
+        if (currentTest.testMethod == 'A') {
+          self.context.router.push('/test/play/reviewA');
+        } else if (currentTest.testMethod == 'B') {
+          self.context.router.push('/test/play/reviewB');
+        } else {  // variant C skips reflection
+          self.context.router.push('/test/play/quiz');
+        }
       } else if (playerStatus == 1) {
         console.log('playing at', player.getCurrentTime());
       } else if (playerStatus == 2) {
@@ -154,14 +182,33 @@ var Play = React.createClass({
   }
 });
 
-var Review = React.createClass({
+var ReviewA = React.createClass({
   render: function () {
     return (
       <div>
-        <p>Review the video; UI depends on method a/b/c</p>
-        <Link to="/test/quiz" className="btn btn-primary btn-lg">Quiz</Link>
+        <p>Review the video; UI A</p>
+        <Link to="/test/play/quiz" className="btn btn-primary btn-lg">Quiz</Link>
       </div>
     );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
+  }
+});
+
+var ReviewB = React.createClass({
+  render: function () {
+    return (
+      <div>
+        <p>Review the video; UI B</p>
+        <Link to="/test/play/quiz" className="btn btn-primary btn-lg">Quiz</Link>
+      </div>
+    );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
   }
 });
 
@@ -170,20 +217,32 @@ var Quiz = React.createClass({
     return (
       <div>
         <p>Present quiz questions; independent of testing method. Need to cycle through different quiz questions.</p>
-        <Link to="/test/done" className="btn btn-primary btn-lg">Done</Link>
+        <Link to="/test/play/done" className="btn btn-primary btn-lg">Done</Link>
       </div>
     );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
   }
 });
 
 var Done = React.createClass({
+  closeModal: function () {
+    $("#qmodal").modal('hide');
+  },
+
   render: function () {
     return (
       <div>
         <p>Present a done message for hand-back to tester.</p>
-        <Link to="/" className="btn btn-primary btn-lg">Ok</Link>
+        <Link to="/" className="btn btn-primary btn-lg" onClick={this.closeModal}>Ok</Link>
       </div>
     );
+  },
+
+  componentDidMount: function () {
+    $("#qmodal").modal('show');
   }
 });
 
@@ -204,10 +263,12 @@ ReactDOM.render((
       <Route path="/" component={Home} />
       <Route path="/test" component={Test} />
       <Route path="/test/ready" component={Ready} />
-      <Route path="/test/play" component={Play} />
-      <Route path="/test/review" component={Review} />
-      <Route path="/test/quiz" component={Quiz} />
-      <Route path="/test/done" component={Done} />
+      <Route path="/test/play" component={Play}>
+        <Route path="/test/play/reviewA" component={ReviewA} />
+        <Route path="/test/play/reviewB" component={ReviewB} />
+        <Route path="/test/play/quiz" component={Quiz} />
+        <Route path="/test/play/done" component={Done} />
+      </Route>
       <Route path="/data" component={Data} />
     </Route>
   </Router>

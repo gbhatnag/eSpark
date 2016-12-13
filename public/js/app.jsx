@@ -36,7 +36,7 @@ const TestSchema = t.struct({
   score      // t.Number
   */
 });
-const formOptions = {
+const TestFormOptions = {
   fields: {
     testMethod: {
       factory: t.form.Radio,
@@ -47,7 +47,6 @@ const formOptions = {
 
 // global state
 var currentTest = {};
-var currentActions = [];
 
 // helper functions
 var displayVideoTime = function (seconds) {
@@ -56,7 +55,19 @@ var displayVideoTime = function (seconds) {
   var spc = '0';
   if (sec >= 10) spc = '';
   return min + ':' + spc + sec;
-}
+};
+
+// adds an action to the currentTest
+var addAction = function (desc) {
+  currentTest.actions.push(new Action(desc));
+};
+
+// persists data to firebase backend
+var updateCurrentTest = function (key, value) {
+  var save = {};
+  save[key] = value;
+  firebase.database().ref('/tests/' + currentTest.key).update(save);
+};
 
 // components
 var App = React.createClass({
@@ -108,7 +119,7 @@ var Test = React.createClass({
         <h1>Setup Test</h1>
         <p>Complete this form and then pass the tablet to the student.</p>
         <form onSubmit={this.saveTest}>
-          <Form ref="setupTestForm" type={TestSchema} options={formOptions} />
+          <Form ref="setupTestForm" type={TestSchema} options={TestFormOptions} />
           <p>
             <button type="submit" className="btn btn-primary btn-lg">Begin Test</button>
           </p>
@@ -167,7 +178,7 @@ var Play = React.createClass({
     var self = this;
     var onPlayerReady = function (event) {
       console.log('video player loaded at', Date());
-      currentTest.actions.push(new Action('video player loaded'));
+      addAction('video player loaded');
     };
     var onPlayerStateChange = function (event) {
       var playerStatus = event.data;
@@ -175,7 +186,7 @@ var Play = React.createClass({
         console.log('unstarted');
       } else if (playerStatus == 0) {
         console.log('ended at', displayVideoTime(player.getCurrentTime()));
-        currentTest.actions.push(new Action('video ended at ' + displayVideoTime(player.getCurrentTime())));
+        addAction('video ended at ' + displayVideoTime(player.getCurrentTime()));
         if (currentTest.values.testMethod == 'A') {
           self.context.router.push('/test/play/reviewA');
         } else if (currentTest.values.testMethod == 'B') {
@@ -185,16 +196,16 @@ var Play = React.createClass({
         }
       } else if (playerStatus == 1) {
         console.log('playing at', displayVideoTime(player.getCurrentTime()));
-        currentTest.actions.push(new Action('video playing at ' + displayVideoTime(player.getCurrentTime())));
+        addAction('video playing at ' + displayVideoTime(player.getCurrentTime()));
       } else if (playerStatus == 2) {
         console.log('paused at', displayVideoTime(player.getCurrentTime()));
-        currentTest.actions.push(new Action('video paused at ' + displayVideoTime(player.getCurrentTime())));
+        addAction('video paused at ' + displayVideoTime(player.getCurrentTime()));
       } else if (playerStatus == 3) {
         console.log('buffering at', displayVideoTime(player.getCurrentTime()));
-        currentTest.actions.push(new Action('video buffering at ' + displayVideoTime(player.getCurrentTime())));
+        addAction('video buffering at ' + displayVideoTime(player.getCurrentTime()));
       } else if (playerStatus == 5) {
         console.log('cued at', displayVideoTime(player.getCurrentTime()));
-        currentTest.actions.push(new Action('video cued at ' + displayVideoTime(player.getCurrentTime())));
+        addAction('video cued at ' + displayVideoTime(player.getCurrentTime()));
       }
     }
     var player = new YT.Player('vid', {
@@ -207,11 +218,32 @@ var Play = React.createClass({
 });
 
 var ReviewA = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  saveReflection: function (ev) {
+    ev.preventDefault();
+    var $ref = $("#reflection");
+    var val = $ref.val().trim();
+    if (!val) {
+      $ref.parent().addClass('has-error');
+      return;
+    }
+    $ref.parent().removeClass('has-error');
+    updateCurrentTest('reflection', val);
+    addAction('added freeform reflection');
+    this.context.router.push('/test/play/quiz');
+  },
+
   render: function () {
     return (
       <div>
-        <p>Review the video; UI A</p>
-        <Link to="/test/play/quiz" className="btn btn-primary btn-lg">Quiz</Link>
+        <p>In your own words, describe what this video was about:</p>
+        <form onSubmit={this.saveReflection}>
+          <p><textarea id="reflection" className="form-control" rows="3" placeholder="Type here"></textarea></p>
+          <button type="submit" className="btn btn-primary btn-lg">Next</button>
+        </form>
       </div>
     );
   },
@@ -253,7 +285,8 @@ var Quiz = React.createClass({
 
 var Done = React.createClass({
   closeModal: function () {
-    firebase.database().ref('/tests/' + currentTest.key).update({actions: currentTest.actions});
+    addAction('completed test');
+    updateCurrentTest('actions', currentTest.actions);
     $("#qmodal").modal('hide');
   },
 

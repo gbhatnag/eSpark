@@ -1,6 +1,8 @@
 # eSpark Learning Programming Challenge
 This project is part of the eSpark Learning engineering interview process. The resulting application is live and can be used at https://espark-50d82.firebaseapp.com.
 
+For any questions or comments, please feel free to email me at gcb@gauravb.org.
+
 ## Design
 I imagined the experience was intended to be used by two people: the 3rd grader as well as a teacher/designer presenting the UX Test to the 3rd grader.  This was the main story I was designing against and I assumed the experience would be used on a Chromebook in a classroom.  I thought about 3rd graders for some time and researched online for 3rd grader learning models.  I did a design analysis of Khan Academy's 3rd grade curriculum to get some context for instructional videos followed by questions and found the Common Core Standards to understand more about how 3rd graders are expected to learn.
 

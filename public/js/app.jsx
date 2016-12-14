@@ -174,9 +174,44 @@ var App = React.createClass({
 var Home = React.createClass({
   render: function () {
     return (
-      <div className="btn-group btn-group-justified">
-        <Link to="/test" className="btn btn-lg btn-primary">Start Test</Link>
-        <Link to="/data" className="btn btn-lg btn-warning">Review Data</Link>
+      <div className="jumbotron">
+        <h1>eSpark Learning UX Test</h1>
+        <p>
+          Use this application to test whether providing reflection prompts after
+          a video increases student reflection and comprehension. The following
+          variants provide different levels and kinds of reflection after the video
+          completes and before the questions are presented.
+        </p>
+        <p>
+          <strong>Variant A</strong> provides free-form reflection input for students
+            immediately after the video. The hypothesis: using their own
+            words to describe the topics in the video will challenge the students
+            to reflect on content and more deeply retain learnings.
+        </p>
+        <p>
+          <strong>Variant B</strong> provides a fixed set of topics to consider
+            when reflecting immediately after the video. Similar hypothesis as
+            Variant A except this version does not allow free-form note-taking.
+            Instead, a fixed set of topics is presented to students. They then
+            select which topics aptly describe the content of the video.
+            Because there is no free-form input, the student is not taken out of
+            their flow by needing to pull up the keyboard and type. They can more
+            swiftly reflect on the video and move on to questions.
+        </p>
+        <p>
+          <strong>Variant C</strong> acts as a control in this experiment: no
+            reflection is provided after the video. Instead, students are taken
+            immediately to the questions. If this variant provides the best
+            results, we will know whether the reflection step adds any value to
+            the student's learning, insofar as this set of topics and questions
+            allow us to measure their learning.
+        </p>
+        <div className="btn-group btn-group-justified">
+          <Link to="/test" className="btn btn-lg btn-primary">Start a Test</Link>
+          <Link to="/data" className="btn btn-lg btn-warning">Review the Data</Link>
+        </div>
+        <p><br/><br/>For more information about the design and development of
+        this project, please see the <a href="https://github.com/gbhatnag/eSpark">GitHub README</a>.</p>
       </div>
     );
   }

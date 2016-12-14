@@ -374,7 +374,7 @@ var Q1 = React.createClass({
     const val = this.refs.q1Form.getValue();
     if (!val) return;  // error
     currentTest.responses['q1'] = val;
-    addAction('responded to question 1');
+    addAction('responded to question 1: ' + val.response);
     this.context.router.push('/test/play/q2');
   },
 
@@ -408,7 +408,7 @@ var Q2 = React.createClass({
     const val = this.refs.q2Form.getValue();
     if (!val) return;  // error
     currentTest.responses['q2'] = val;
-    addAction('responded to question 2');
+    addAction('responded to question 2: ' + val.response);
     this.context.router.push('/test/play/q3');
   },
 
@@ -442,7 +442,7 @@ var Q3 = React.createClass({
     const val = this.refs.q3Form.getValue();
     if (!val) return;  // error
     currentTest.responses['q3'] = val;
-    addAction('responded to question 3');
+    addAction('responded to question 3: ' + val.response);
     this.context.router.push('/test/play/q4');
   },
 
@@ -476,7 +476,7 @@ var Q4 = React.createClass({
     const val = this.refs.q4Form.getValue();
     if (!val) return;  // error
     currentTest.responses['q4'] = val;
-    addAction('responded to question 4');
+    addAction('responded to question 4: ' + val.response);
     this.context.router.push('/test/play/q5');
   },
 
@@ -511,7 +511,7 @@ var Q5 = React.createClass({
     const val = this.refs.q5Form.getValue();
     if (!val) return;  // error
     currentTest.responses['q5'] = val;
-    addAction('responded to question 5');
+    addAction('responded to question 5: ' + val.response);
     this.context.router.push('/test/play/q6');
   },
 
@@ -545,7 +545,7 @@ var Q6 = React.createClass({
     const val = this.refs.q6Form.getValue();
     if (!val) return;  // error
     currentTest.responses['q6'] = val;
-    addAction('responded to question 6');
+    addAction('responded to question 6: ' + val.response);
     this.context.router.push('/test/play/q7');
   },
 
@@ -579,7 +579,7 @@ var Q7 = React.createClass({
     const val = this.refs.q7Form.getValue();
     if (!val) return;  // error
     currentTest.responses['q7'] = val;
-    addAction('responded to question 7');
+    addAction('responded to question 7: ' + val.response);
     this.context.router.push('/test/play/done');
   },
 

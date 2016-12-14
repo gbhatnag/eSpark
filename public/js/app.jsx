@@ -151,7 +151,10 @@ var calculateScore = function () {
       correct++;
     }
   }
-  return (100 * correct / 7).toFixed(0) + '%';
+  return 100 * correct / 7;
+};
+var displayScore = function (score) {
+  return score.toFixed(0) + "%";
 };
 
 // components
@@ -633,13 +636,194 @@ var Done = React.createClass({
 });
 
 var Data = React.createClass({
+  mixins: [ReactFireMixin],
+
+  getInitialState: function () {
+    return {
+      tests: []
+    }
+  },
+
+  componentWillMount: function () {
+    var ref = firebase.database().ref("/tests");
+    this.bindAsArray(ref, "tests");
+  },
+
+  renderTestRow: function (test, i) {
+    console.log(i,test);
+    var start = moment(test.actions[0].time);
+    var end   = moment(test.actions[test.actions.length - 1].time);
+    var diff  = end.diff(start);
+    var displaytimestamp = 'MMM Do YYYY, h:mm:ss a';
+    var displayduration = 'm [min] ss [sec]';
+    return (
+      <tr key={'testrow-'+i}>
+        <td>{i+1}</td>
+        <td>{test.studentName}</td>
+        <td>{test.testMethod}</td>
+        <td>{displayScore(test.score)}</td>
+        <td>{start.format(displaytimestamp)}</td>
+        <td>{moment(diff).format(displayduration)}</td>
+        <td><Link to={"/data/actions/"+test['.key']}>View</Link></td>
+          {/*
+        */}
+      </tr>
+    );
+  },
+
+  render: function () {
+    var A = {
+      score: 0,
+      count: 0,
+      total: 0,
+      display: 'calculating',
+      progbar: {width:'0%'}
+    };
+    var B = {
+      score: 0,
+      count: 0,
+      total: 0,
+      display: 'calculating',
+      progbar: {width:'0%'}
+    };
+    var C = {
+      score: 0,
+      count: 0,
+      total: 0,
+      display: 'calculating',
+      progbar: {width:'0%'}
+    };
+    if (this.state.tests.length != 0) {
+      this.state.tests.forEach(function (test) {
+        if (test.testMethod == 'A') {
+          A.count++;
+          A.total += test.score;
+        } else if (test.testMethod == 'B') {
+          B.count++;
+          B.total += test.score;
+        } else {
+          C.count++;
+          C.total += test.score;
+        }
+      });
+      A.score = A.total / A.count;
+      B.score = B.total / B.count;
+      C.score = C.total / C.count;
+    }
+    A.display = displayScore(A.score);
+    B.display = displayScore(B.score);
+    C.display = displayScore(C.score);
+    A.progbar = {'width': A.display};
+    B.progbar = {'width': B.display};
+    C.progbar = {'width': C.display};
+    return (
+      <div className="jumbotron">
+        <h1>Variant and Test Data</h1>
+        <p><span className="badge">{A.count}</span> Variant A: Reflect in your own words. Overall score: {A.display}</p>
+        <div className="progress">
+          <div className="progress-bar" style={A.progbar}></div>
+        </div>
+        <p><span className="badge">{B.count}</span> Variant B: Reflect using given words. Overall score: {B.display}</p>
+        <div className="progress">
+          <div className="progress-bar" style={B.progbar}></div>
+        </div>
+        <p><span className="badge">{C.count}</span> Variant C: (Control) No reflection. Overall score: {C.display}</p>
+        <div className="progress">
+          <div className="progress-bar" style={C.progbar}></div>
+        </div>
+
+        <table className="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Student Name</th>
+              <th>Variant</th>
+              <th>Score</th>
+              <th>Start Time</th>
+              <th>Duration</th>
+              <th>Test Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {this.state.tests.map(this.renderTestRow)}
+          </tbody>
+        </table>
+
+        <div id="actions-modal" className="modal">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <button type="button" className="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              </div>
+              <div className="modal-body">
+                {this.props.children}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    );
+  }
+});
+
+var Actions = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object.isRequired
+  },
+
+  mixins: [ReactFireMixin],
+
+  getInitialState: function () {
+    return {
+      test: {},
+      display: 'MMM Do YYYY, h:mm:ss a'
+    }
+  },
+
+  componentWillMount: function () {
+    var self = this;
+    var ref = firebase.database().ref("/tests/" + this.props.params.testKey);
+    self.bindAsObject(ref, "test");
+  },
+
+  renderActionRow: function (action, i) {
+    var self = this;
+    var time = moment(action.time);
+    return (
+      <tr key={'actionrow-'+i}>
+        <td>{i+1}</td>
+        <td>{action.description}</td>
+        <td>{time.format(self.state.display)}</td>
+      </tr>
+    );
+  },
+
   render: function () {
     return (
       <div>
-        <p>Show some data here.</p>
-        <Link to="/" className="btn btn-primary btn-lg">Go back home</Link>
+        <table className="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Description</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            {this.state.test.actions.map(this.renderActionRow)}
+          </tbody>
+        </table>
       </div>
     );
+  },
+
+  componentDidMount: function () {
+    var self = this;
+    $("#actions-modal").modal('show');
+    $("#actions-modal").on('hidden.bs.modal', function (ev) {
+      self.context.router.push('/data');
+    });
   }
 });
 
@@ -661,7 +845,9 @@ ReactDOM.render((
         <Route path="/test/play/q7" component={Q7} />
         <Route path="/test/play/done" component={Done} />
       </Route>
-      <Route path="/data" component={Data} />
+      <Route path="/data" component={Data}>
+        <Route path="/data/actions/:testKey" component={Actions} />
+      </Route>
     </Route>
   </Router>
 ), document.getElementById('root'));

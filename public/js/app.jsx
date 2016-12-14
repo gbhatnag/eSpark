@@ -265,15 +265,11 @@ var Play = React.createClass({
   componentDidMount: function () {
     var self = this;
     var onPlayerReady = function (event) {
-      console.log('video player loaded at', Date());
       addAction('video player loaded');
     };
     var onPlayerStateChange = function (event) {
       var playerStatus = event.data;
-      if (playerStatus == -1) {
-        console.log('unstarted');
-      } else if (playerStatus == 0) {
-        console.log('ended at', displayVideoTime(player.getCurrentTime()));
+      if (playerStatus == 0) {
         addAction('video ended at ' + displayVideoTime(player.getCurrentTime()));
         if (currentTest.testMethod == 'A') {
           self.context.router.push('/test/play/reviewA');
@@ -283,16 +279,12 @@ var Play = React.createClass({
           self.context.router.push('/test/play/q1');
         }
       } else if (playerStatus == 1) {
-        console.log('playing at', displayVideoTime(player.getCurrentTime()));
         addAction('video playing at ' + displayVideoTime(player.getCurrentTime()));
       } else if (playerStatus == 2) {
-        console.log('paused at', displayVideoTime(player.getCurrentTime()));
         addAction('video paused at ' + displayVideoTime(player.getCurrentTime()));
       } else if (playerStatus == 3) {
-        console.log('buffering at', displayVideoTime(player.getCurrentTime()));
         addAction('video buffering at ' + displayVideoTime(player.getCurrentTime()));
       } else if (playerStatus == 5) {
-        console.log('cued at', displayVideoTime(player.getCurrentTime()));
         addAction('video cued at ' + displayVideoTime(player.getCurrentTime()));
       }
     }
@@ -650,7 +642,6 @@ var Data = React.createClass({
   },
 
   renderTestRow: function (test, i) {
-    console.log(i,test);
     var start = moment(test.actions[0].time);
     var end   = moment(test.actions[test.actions.length - 1].time);
     var diff  = end.diff(start);
